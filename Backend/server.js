@@ -23,10 +23,16 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // CORS configuration
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+  ? [
+      'http://localhost:3000',
+      process.env.FRONTEND_URL || 'https://your-vercel-app.vercel.app',
+      /\.vercel\.app$/ // Allow all Vercel subdomains
+    ]
+  : true;
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['http://localhost:3000'] // Add your frontend URLs here
-    : true,
+  origin: allowedOrigins,
   credentials: true
 }));
 
