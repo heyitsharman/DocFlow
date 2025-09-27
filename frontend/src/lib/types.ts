@@ -48,14 +48,15 @@ export interface ApiResponse<T = any> {
   errors?: string[];
 }
 
-export interface PaginatedResponse<T> extends ApiResponse<T> {
-  data: {
-    [key: string]: T[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      pages: number;
-    };
+export interface PaginatedResponse<T> {
+  success: boolean;
+  message: string;
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
   };
+  errors?: string[];
 }
