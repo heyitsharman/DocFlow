@@ -567,6 +567,7 @@ router.delete('/documents/:id', async (req, res) => {
 // @access  Private (Admin only)
 router.get('/documents/:id/download', async (req, res) => {
   try {
+    console.log('Admin download route hit for document ID:', req.params.id);
     const document = await Document.findById(req.params.id);
 
     if (!document) {
@@ -610,6 +611,44 @@ router.get('/documents/:id/download', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to download document'
+    });
+  }
+});
+
+// @route   GET /api/admin/documents/:id/details
+// @desc    Admin get detailed document information  
+// @access  Private (Admin only)
+router.get('/documents/:id/details', async (req, res) => {
+  try {
+    const document = await Document.findById(req.params.id)
+      .populate('uploadedBy', 'name employeeId department position role')
+      .populate('reviewedBy', 'name employeeId');
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        document: {
+          ...document.toObject(),
+          // Add computed fields
+          age: document.age,
+          fileSizeFormatted: document.fileSizeFormatted,
+          statusColor: document.statusColor
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Admin get document details error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch document details'
     });
   }
 });

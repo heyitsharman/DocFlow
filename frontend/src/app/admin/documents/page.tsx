@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import Layout from '@/components/layout/Layout'
 import api from '@/lib/api'
+import DocumentDetailsModal from '@/components/ui/DocumentDetailsModal'
 
 interface Document {
   _id: string
@@ -41,6 +42,8 @@ export default function AdminDocumentsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string>('')
 
   useEffect(() => {
     if (isAdmin) {
@@ -55,6 +58,10 @@ export default function AdminDocumentsPage() {
       console.log('API response:', response.data)
       // The backend returns { success: true, data: { documents: [...] } }
       const documentsData = response.data?.data?.documents || []
+      console.log('Admin documents data:', documentsData)
+      documentsData.forEach((doc: Document) => {
+        console.log(`Admin Document ${doc.title}: hasFile=${doc.hasFile}, filename=${doc.filename}`)
+      })
       setDocuments(documentsData)
     } catch (error) {
       console.error('Error fetching documents:', error)
@@ -66,9 +73,12 @@ export default function AdminDocumentsPage() {
 
   const handleDownload = async (documentId: string, fileName: string) => {
     try {
+      console.log('Admin attempting to download document:', documentId)
+      console.log('Admin download URL:', `/admin/documents/${documentId}/download`)
       const response = await api.get(`/admin/documents/${documentId}/download`, {
         responseType: 'blob',
       })
+      console.log('Admin download response:', response)
       
       // Create blob link to download
       const url = window.URL.createObjectURL(new Blob([response.data]))
@@ -280,6 +290,15 @@ export default function AdminDocumentsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
+                            <button
+                              onClick={() => {
+                                setSelectedDocumentId(document._id)
+                                setIsModalOpen(true)
+                              }}
+                              className="text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-md transition-colors"
+                            >
+                              View Details
+                            </button>
                             {document.hasFile && (
                               <button
                                 onClick={() => handleDownload(document._id, document.originalName || 'document')}
@@ -335,6 +354,15 @@ export default function AdminDocumentsPage() {
           </div>
         )}
       </div>
+      
+      <DocumentDetailsModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setSelectedDocumentId('')
+        }}
+        documentId={selectedDocumentId}
+      />
     </Layout>
   )
 }

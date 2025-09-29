@@ -96,6 +96,13 @@ export default function UploadPage() {
       uploadFormData.append('priority', formData.priority)
       uploadFormData.append('hasFile', saveWithoutFile ? 'false' : 'true')
       
+      console.log('Upload form data:')
+      console.log('- Title:', formData.title)
+      console.log('- Category:', formData.category) 
+      console.log('- Has file:', !saveWithoutFile)
+      console.log('- Selected file:', !!selectedFile)
+      console.log('- Save without file:', saveWithoutFile)
+      
       // Add vendor details
       uploadFormData.append('vendorName', formData.vendorName)
       uploadFormData.append('vendorPhone', formData.vendorPhone)

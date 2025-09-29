@@ -62,9 +62,15 @@ router.post('/upload',
   validateDocument,
   async (req, res) => {
     try {
+      console.log('Upload request received:')
+      console.log('- Body:', req.body)
+      console.log('- File:', !!req.file)
+      console.log('- User:', req.user?.name)
+      
       // Check validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        console.log('Validation errors:', errors.array())
         // Delete uploaded file if validation fails
         if (req.file) {
           deleteFile(req.file.path);
@@ -73,14 +79,6 @@ router.post('/upload',
           success: false,
           message: 'Validation failed',
           errors: errors.array()
-        });
-      }
-
-      // Allow saving without file if hasFile is false
-      if (!req.file && hasFile !== 'false') {
-        return res.status(400).json({
-          success: false,
-          message: 'No file uploaded'
         });
       }
 
@@ -97,8 +95,18 @@ router.post('/upload',
         vendorPhone,
         vendorDate,
         vendorNotes,
-        hasFile = true
+        hasFile
       } = req.body;
+
+      // Determine if document should have file based on request
+      const shouldHaveFile = hasFile !== 'false';
+      
+      if (!req.file && shouldHaveFile) {
+        return res.status(400).json({
+          success: false,
+          message: 'No file uploaded'
+        });
+      }
 
       // Parse tags if provided as string
       let parsedTags = [];
@@ -131,7 +139,7 @@ router.post('/upload',
           vendorDate: vendorDate ? new Date(vendorDate) : null,
           vendorNotes: vendorNotes || ''
         },
-        hasFile: hasFile !== 'false'
+        hasFile: !!req.file
       };
 
       // Add file details only if file is uploaded
@@ -142,6 +150,14 @@ router.post('/upload',
         documentData.fileSize = req.file.size;
         documentData.mimeType = req.file.mimetype;
         documentData.fileType = getFileType(req.file.mimetype);
+      } else {
+        // For documents without files, set default values
+        documentData.fileName = null;
+        documentData.originalName = null;
+        documentData.filePath = null;
+        documentData.fileSize = null;
+        documentData.mimeType = null;
+        documentData.fileType = 'other';
       }
 
       const document = new Document(documentData);
@@ -306,7 +322,7 @@ router.get('/my-stats', async (req, res) => {
 });
 
 // @route   GET /api/documents/:id
-// @desc    Get single document
+// @desc    Get single document with all details
 // @access  Private
 router.get('/:id', async (req, res) => {
   try {
@@ -333,7 +349,13 @@ router.get('/:id', async (req, res) => {
     res.json({
       success: true,
       data: {
-        document
+        document: {
+          ...document.toObject(),
+          // Add computed fields
+          age: document.age,
+          fileSizeFormatted: document.fileSizeFormatted,
+          statusColor: document.statusColor
+        }
       }
     });
 
@@ -485,8 +507,9 @@ router.delete('/:id', async (req, res) => {
 // @route   GET /api/documents/:id/download
 // @desc    Download document file
 // @access  Private
-router.get('/:id/download', async (req, res) => {
+router.get('/:id/download', authenticate, async (req, res) => {
   try {
+    console.log('Download route hit for document ID:', req.params.id);
     const document = await Document.findById(req.params.id);
 
     if (!document) {
@@ -595,6 +618,11 @@ router.get('/search/query', [
       message: 'Search failed'
     });
   }
+});
+
+// Test route to verify endpoint works
+router.get('/test', authenticate, (req, res) => {
+  res.json({ success: true, message: 'Document routes working', user: req.user.name });
 });
 
 module.exports = router;

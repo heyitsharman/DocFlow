@@ -147,7 +147,7 @@ const documentSchema = new mongoose.Schema({
   // Allow saving details even without file
   hasFile: {
     type: Boolean,
-    default: true
+    default: false
   }
 }, {
   timestamps: true,

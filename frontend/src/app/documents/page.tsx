@@ -4,33 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Layout from '@/components/layout/Layout'
+import DocumentDetailsModal from '@/components/ui/DocumentDetailsModal'
+import { Document } from '@/lib/types'
 import api from '@/lib/api'
-
-interface Document {
-  _id: string
-  title: string
-  originalName?: string
-  fileSize?: number
-  category: string
-  priority: string
-  status: 'pending' | 'approved' | 'rejected' | 'under_review'
-  createdAt: string
-  hasFile: boolean
-  vendorDetails?: {
-    vendorName?: string
-    vendorPhone?: string
-    vendorDate?: string
-    vendorNotes?: string
-  }
-  reviewedBy?: {
-    name: string
-    employeeId: string
-  }
-  reviewDate?: string
-  reviewComments?: string
-  tags?: string[]
-  downloadCount?: number
-}
 
 export default function DocumentsPage() {
   const { user } = useAuth()
@@ -39,6 +15,8 @@ export default function DocumentsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     fetchDocuments()
@@ -50,6 +28,10 @@ export default function DocumentsPage() {
       const response = await api.get('/documents')
       console.log('Documents response:', response.data)
       const documentsData = response.data?.data?.documents || []
+      console.log('Documents data:', documentsData)
+      documentsData.forEach((doc: Document) => {
+        console.log(`Document ${doc.title}: hasFile=${doc.hasFile}, fileName=${doc.fileName}`)
+      })
       setDocuments(documentsData)
     } catch (error) {
       console.error('Error fetching documents:', error)
@@ -61,9 +43,12 @@ export default function DocumentsPage() {
 
   const handleDownload = async (documentId: string, fileName: string) => {
     try {
+      console.log('Attempting to download document:', documentId)
+      console.log('Download URL:', `/documents/${documentId}/download`)
       const response = await api.get(`/documents/${documentId}/download`, {
         responseType: 'blob',
       })
+      console.log('Download response:', response)
       
       // Create blob link to download
       const url = window.URL.createObjectURL(new Blob([response.data]))
@@ -247,8 +232,8 @@ export default function DocumentsPage() {
                                   {(doc.fileSize / 1024 / 1024).toFixed(2)} MB
                                 </span>
                               )}
-                              <span className={`${doc.fileSize ? 'ml-2' : ''} text-xs font-medium ${getPriorityColor(doc.priority)}`}>
-                                {doc.priority.toUpperCase()}
+                              <span className={`${doc.fileSize ? 'ml-2' : ''} text-xs font-medium ${getPriorityColor(doc.priority || 'medium')}`}>
+                                {(doc.priority || 'medium').toUpperCase()}
                               </span>
                               {!doc.hasFile && (
                                 <span className="ml-2 text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
@@ -311,6 +296,19 @@ export default function DocumentsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
+                            <button
+                              onClick={() => {
+                                setSelectedDocumentId(doc._id)
+                                setIsModalOpen(true)
+                              }}
+                              className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                            >
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              View Details
+                            </button>
                             {doc.hasFile && (
                               <button
                                 onClick={() => handleDownload(doc._id, doc.originalName || 'document')}

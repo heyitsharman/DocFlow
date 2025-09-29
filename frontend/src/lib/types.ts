@@ -23,6 +23,7 @@ export interface Document {
   fileSize?: number;
   mimeType?: string;
   originalName?: string;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
   status: 'pending' | 'approved' | 'rejected' | 'under_review';
   uploadedBy: {
     _id: string;
@@ -47,6 +48,7 @@ export interface Document {
   };
   downloadCount?: number;
   lastDownloadDate?: string;
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
 }
