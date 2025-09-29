@@ -76,7 +76,8 @@ router.post('/upload',
         });
       }
 
-      if (!req.file) {
+      // Allow saving without file if hasFile is false
+      if (!req.file && hasFile !== 'false') {
         return res.status(400).json({
           success: false,
           message: 'No file uploaded'
@@ -90,7 +91,13 @@ router.post('/upload',
         priority = 'medium',
         tags,
         expiryDate,
-        metadata
+        metadata,
+        // New vendor fields
+        vendorName,
+        vendorPhone,
+        vendorDate,
+        vendorNotes,
+        hasFile = true
       } = req.body;
 
       // Parse tags if provided as string
@@ -106,15 +113,9 @@ router.post('/upload',
       }
 
       // Create document record
-      const document = new Document({
+      const documentData = {
         title,
         description,
-        fileName: req.file.filename,
-        originalName: req.file.originalname,
-        filePath: req.file.path,
-        fileSize: req.file.size,
-        mimeType: req.file.mimetype,
-        fileType: getFileType(req.file.mimetype),
         category,
         priority,
         uploadedBy: req.user._id,
@@ -123,8 +124,27 @@ router.post('/upload',
         metadata: {
           ...parsedMetadata,
           department: req.user.department
-        }
-      });
+        },
+        vendorDetails: {
+          vendorName: vendorName || '',
+          vendorPhone: vendorPhone || '',
+          vendorDate: vendorDate ? new Date(vendorDate) : null,
+          vendorNotes: vendorNotes || ''
+        },
+        hasFile: hasFile !== 'false'
+      };
+
+      // Add file details only if file is uploaded
+      if (req.file) {
+        documentData.fileName = req.file.filename;
+        documentData.originalName = req.file.originalname;
+        documentData.filePath = req.file.path;
+        documentData.fileSize = req.file.size;
+        documentData.mimeType = req.file.mimetype;
+        documentData.fileType = getFileType(req.file.mimetype);
+      }
+
+      const document = new Document(documentData);
 
       await document.save();
 
@@ -482,6 +502,14 @@ router.get('/:id/download', async (req, res) => {
       return res.status(403).json({
         success: false,
         message: 'Access denied'
+      });
+    }
+
+    // Check if document has file
+    if (!document.hasFile || !document.filePath) {
+      return res.status(404).json({
+        success: false,
+        message: 'No file attached to this document'
       });
     }
 

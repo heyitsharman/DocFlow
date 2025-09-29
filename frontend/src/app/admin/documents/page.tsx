@@ -8,23 +8,41 @@ import api from '@/lib/api'
 interface Document {
   _id: string
   title: string
-  filename: string
-  originalName: string
+  filename?: string
+  originalName?: string
+                           {document.status === 'approved' && document.reviewedBy && (
+                            <div className="text-sm text-green-600">
+                              Approved by {document.reviewedBy.name}
+                              <br />
+                              <span className="text-xs">{document.reviewDate && formatDate(document.reviewDate)}</span>
+                            </div>
+                          )}e:                               {document.reviewComments && (
+                                <div className="mt-1 text-xs text-red-600">
+                                  Reason: {document.reviewComments}
+                                </div>
+                              )}an
   uploadedBy: {
     _id: string
     name: string
     employeeId: string
     department: string
   }
-  uploadDate: string
-  size: number
-  status: 'pending' | 'approved' | 'rejected'
-  approvedBy?: {
+  createdAt: string
+  fileSize?: number
+  status: 'pending' | 'approved' | 'rejected' | 'under_review'
+  reviewedBy?: {
     name: string
     employeeId: string
   }
-  approvalDate?: string
-  rejectionReason?: string
+  reviewDate?: string
+  reviewComments?: string
+  vendorDetails?: {
+    vendorName?: string
+    vendorPhone?: string
+    vendorDate?: string
+    vendorNotes?: string
+  }
+  downloadCount?: number
 }
 
 export default function AdminDocumentsPage() {
@@ -53,6 +71,27 @@ export default function AdminDocumentsPage() {
       setError('Failed to load documents')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDownload = async (documentId: string, fileName: string) => {
+    try {
+      const response = await api.get(`/admin/documents/${documentId}/download`, {
+        responseType: 'blob',
+      })
+      
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', fileName)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error: any) {
+      console.error('Download failed:', error)
+      alert(error.response?.data?.message || 'Download failed. Please try again.')
     }
   }
 
@@ -223,8 +262,16 @@ export default function AdminDocumentsPage() {
                               </svg>
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{document.title || document.originalName}</div>
-                              <div className="text-sm text-gray-500">{document.filename}</div>
+                              <div className="text-sm font-medium text-gray-900">{document.title}</div>
+                              <div className="text-sm text-gray-500">
+                                {document.hasFile ? document.originalName : 'No file attached'}
+                              </div>
+                              {document.vendorDetails && (document.vendorDetails.vendorName || document.vendorDetails.vendorPhone) && (
+                                <div className="text-xs text-blue-600 mt-1">
+                                  <div>📋 Vendor: {document.vendorDetails.vendorName || 'N/A'}</div>
+                                  {document.vendorDetails.vendorPhone && <div>📞 Phone: {document.vendorDetails.vendorPhone}</div>}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -233,34 +280,44 @@ export default function AdminDocumentsPage() {
                           <div className="text-sm text-gray-500">{document.uploadedBy.employeeId} • {document.uploadedBy.department}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(document.uploadDate)}
+                          {formatDate(document.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatFileSize(document.size)}
+                          {document.fileSize ? formatFileSize(document.fileSize) : 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {getStatusBadge(document.status)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          {document.status === 'pending' && (
-                            <div className="flex space-x-2">
+                          <div className="flex space-x-2">
+                            {document.hasFile && (
                               <button
-                                onClick={() => handleApprove(document._id)}
-                                className="text-green-600 hover:text-green-900 bg-green-100 hover:bg-green-200 px-3 py-1 rounded-md transition-colors"
+                                onClick={() => handleDownload(document._id, document.originalName || 'document')}
+                                className="text-blue-600 hover:text-blue-900 bg-blue-100 hover:bg-blue-200 px-3 py-1 rounded-md transition-colors"
                               >
-                                Approve
+                                Download
                               </button>
-                              <button
-                                onClick={() => {
-                                  const reason = prompt('Enter rejection reason:')
-                                  if (reason) handleReject(document._id, reason)
-                                }}
-                                className="text-red-600 hover:text-red-900 bg-red-100 hover:bg-red-200 px-3 py-1 rounded-md transition-colors"
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          )}
+                            )}
+                            {document.status === 'pending' && (
+                              <>
+                                <button
+                                  onClick={() => handleApprove(document._id)}
+                                  className="text-green-600 hover:text-green-900 bg-green-100 hover:bg-green-200 px-3 py-1 rounded-md transition-colors"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const reason = prompt('Enter rejection reason:')
+                                    if (reason) handleReject(document._id, reason)
+                                  }}
+                                  className="text-red-600 hover:text-red-900 bg-red-100 hover:bg-red-200 px-3 py-1 rounded-md transition-colors"
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                          </div>
                           {document.status === 'approved' && document.approvedBy && (
                             <div className="text-sm text-gray-500">
                               Approved by {document.approvedBy.name}

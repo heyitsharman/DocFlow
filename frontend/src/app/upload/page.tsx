@@ -18,8 +18,13 @@ export default function UploadPage() {
     description: '',
     category: '',
     priority: 'medium',
-    tags: ''
+    tags: '',
+    vendorName: '',
+    vendorPhone: '',
+    vendorDate: '',
+    vendorNotes: ''
   })
+  const [saveWithoutFile, setSaveWithoutFile] = useState(false)
 
   const categories = [
     { value: 'leave_application', label: 'Leave Application' },
@@ -58,8 +63,8 @@ export default function UploadPage() {
   }
 
   const handleUpload = async () => {
-    if (!selectedFile) {
-      setError('Please select a file to upload')
+    if (!selectedFile && !saveWithoutFile) {
+      setError('Please select a file to upload or enable "Save without file"')
       return
     }
 
@@ -79,11 +84,23 @@ export default function UploadPage() {
 
     try {
       const uploadFormData = new FormData()
-      uploadFormData.append('document', selectedFile)
+      
+      // Only append file if one is selected
+      if (selectedFile) {
+        uploadFormData.append('document', selectedFile)
+      }
+      
       uploadFormData.append('title', formData.title)
       uploadFormData.append('description', formData.description)
       uploadFormData.append('category', formData.category)
       uploadFormData.append('priority', formData.priority)
+      uploadFormData.append('hasFile', saveWithoutFile ? 'false' : 'true')
+      
+      // Add vendor details
+      uploadFormData.append('vendorName', formData.vendorName)
+      uploadFormData.append('vendorPhone', formData.vendorPhone)
+      uploadFormData.append('vendorDate', formData.vendorDate)
+      uploadFormData.append('vendorNotes', formData.vendorNotes)
       
       // Parse tags from comma-separated string
       if (formData.tags.trim()) {
@@ -101,12 +118,17 @@ export default function UploadPage() {
       
       // Reset form
       setSelectedFile(null)
+      setSaveWithoutFile(false)
       setFormData({
         title: '',
         description: '',
         category: '',
         priority: 'medium',
-        tags: ''
+        tags: '',
+        vendorName: '',
+        vendorPhone: '',
+        vendorDate: '',
+        vendorNotes: ''
       })
 
       // Reset file input
@@ -154,29 +176,51 @@ export default function UploadPage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             {/* File Upload Section */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Document *
-              </label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
-                <div className="space-y-1 text-center">
-                  <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <div className="flex text-sm text-gray-600">
-                    <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500">
-                      <span>Upload a file</span>
-                      <input
-                        type="file"
-                        onChange={handleFileSelect}
-                        className="sr-only"
-                        accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
-                      />
-                    </label>
-                    <p className="pl-1">or drag and drop</p>
-                  </div>
-                  <p className="text-xs text-gray-500">PDF, DOC, DOCX, TXT, JPG, PNG up to 10MB</p>
-                </div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Select Document {!saveWithoutFile && '*'}
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={saveWithoutFile}
+                    onChange={(e) => setSaveWithoutFile(e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                  />
+                  <span className="ml-2 text-sm text-gray-600">Save without file</span>
+                </label>
               </div>
+              
+              {!saveWithoutFile && (
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
+                  <div className="space-y-1 text-center">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <div className="flex text-sm text-gray-600">
+                      <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500">
+                        <span>Upload a file</span>
+                        <input
+                          type="file"
+                          onChange={handleFileSelect}
+                          className="sr-only"
+                          accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                        />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">PDF, DOC, DOCX, TXT, JPG, PNG up to 10MB</p>
+                  </div>
+                </div>
+              )}
+              
+              {saveWithoutFile && (
+                <div className="mt-1 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-sm text-blue-700">
+                    📝 You can save document details without uploading a file. This is useful for tracking document requests or pending documents.
+                  </p>
+                </div>
+              )}
             </div>
 
             {selectedFile && (
@@ -284,14 +328,78 @@ export default function UploadPage() {
               </div>
             </div>
 
+            {/* Vendor Details Section */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Vendor Details (Optional)</h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Vendor Name
+                    </label>
+                    <input
+                      type="text"
+                      name="vendorName"
+                      value={formData.vendorName}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter vendor name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Vendor Phone
+                    </label>
+                    <input
+                      type="tel"
+                      name="vendorPhone"
+                      value={formData.vendorPhone}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter vendor phone number"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Vendor Date
+                  </label>
+                  <input
+                    type="date"
+                    name="vendorDate"
+                    value={formData.vendorDate}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Vendor Notes
+                  </label>
+                  <textarea
+                    name="vendorNotes"
+                    value={formData.vendorNotes}
+                    onChange={handleInputChange}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Additional notes about the vendor"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="mt-6 pt-6 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-500">
-                  {selectedFile && formData.title && formData.category ? 'Ready to upload' : 'Please complete all required fields'}
+                  {((selectedFile || saveWithoutFile) && formData.title && formData.category) ? 
+                    'Ready to upload' : 'Please complete all required fields'}
                 </div>
                 <button
                   onClick={handleUpload}
-                  disabled={!selectedFile || !formData.title || !formData.category || uploading}
+                  disabled={!(selectedFile || saveWithoutFile) || !formData.title || !formData.category || uploading}
                   className="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {uploading && (
@@ -300,7 +408,7 @@ export default function UploadPage() {
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
                   )}
-                  {uploading ? 'Uploading...' : 'Upload Document'}
+                  {uploading ? (saveWithoutFile ? 'Saving...' : 'Uploading...') : (saveWithoutFile ? 'Save Details' : 'Upload Document')}
                 </button>
               </div>
             </div>

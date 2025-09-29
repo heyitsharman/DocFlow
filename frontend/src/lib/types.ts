@@ -18,10 +18,11 @@ export interface Document {
   title: string;
   description?: string;
   category: string;
-  fileName: string;
-  filePath: string;
-  fileSize: number;
-  mimeType: string;
+  fileName?: string;
+  filePath?: string;
+  fileSize?: number;
+  mimeType?: string;
+  originalName?: string;
   status: 'pending' | 'approved' | 'rejected' | 'under_review';
   uploadedBy: {
     _id: string;
@@ -37,6 +38,15 @@ export interface Document {
   reviewDate?: string;
   reviewComments?: string;
   isArchived: boolean;
+  hasFile: boolean;
+  vendorDetails?: {
+    vendorName?: string;
+    vendorPhone?: string;
+    vendorDate?: string;
+    vendorNotes?: string;
+  };
+  downloadCount?: number;
+  lastDownloadDate?: string;
   createdAt: string;
   updatedAt: string;
 }

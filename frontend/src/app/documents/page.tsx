@@ -9,12 +9,19 @@ import api from '@/lib/api'
 interface Document {
   _id: string
   title: string
-  originalName: string
-  fileSize: number
+  originalName?: string
+  fileSize?: number
   category: string
   priority: string
   status: 'pending' | 'approved' | 'rejected' | 'under_review'
   createdAt: string
+  hasFile: boolean
+  vendorDetails?: {
+    vendorName?: string
+    vendorPhone?: string
+    vendorDate?: string
+    vendorNotes?: string
+  }
   reviewedBy?: {
     name: string
     employeeId: string
@@ -22,6 +29,7 @@ interface Document {
   reviewDate?: string
   reviewComments?: string
   tags?: string[]
+  downloadCount?: number
 }
 
 export default function DocumentsPage() {
@@ -48,6 +56,27 @@ export default function DocumentsPage() {
       setError('Failed to load documents')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDownload = async (documentId: string, fileName: string) => {
+    try {
+      const response = await api.get(`/documents/${documentId}/download`, {
+        responseType: 'blob',
+      })
+      
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', fileName)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error: any) {
+      console.error('Download failed:', error)
+      alert(error.response?.data?.message || 'Download failed. Please try again.')
     }
   }
 
@@ -198,6 +227,9 @@ export default function DocumentsPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Review Info
                       </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -206,15 +238,30 @@ export default function DocumentsPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">{doc.title}</div>
-                            <div className="text-sm text-gray-500">{doc.originalName}</div>
+                            <div className="text-sm text-gray-500">
+                              {doc.hasFile ? doc.originalName : 'No file attached'}
+                            </div>
                             <div className="flex items-center mt-1">
-                              <span className="text-xs text-gray-400">
-                                {(doc.fileSize / 1024 / 1024).toFixed(2)} MB
-                              </span>
-                              <span className={`ml-2 text-xs font-medium ${getPriorityColor(doc.priority)}`}>
+                              {doc.hasFile && doc.fileSize && (
+                                <span className="text-xs text-gray-400">
+                                  {(doc.fileSize / 1024 / 1024).toFixed(2)} MB
+                                </span>
+                              )}
+                              <span className={`${doc.fileSize ? 'ml-2' : ''} text-xs font-medium ${getPriorityColor(doc.priority)}`}>
                                 {doc.priority.toUpperCase()}
                               </span>
+                              {!doc.hasFile && (
+                                <span className="ml-2 text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
+                                  DETAILS ONLY
+                                </span>
+                              )}
                             </div>
+                            {doc.vendorDetails && (doc.vendorDetails.vendorName || doc.vendorDetails.vendorPhone) && (
+                              <div className="mt-1 text-xs text-gray-500">
+                                <div>Vendor: {doc.vendorDetails.vendorName || 'N/A'}</div>
+                                {doc.vendorDetails.vendorPhone && <div>Phone: {doc.vendorDetails.vendorPhone}</div>}
+                              </div>
+                            )}
                             {doc.tags && doc.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {doc.tags.map((tag, index) => (
@@ -261,6 +308,26 @@ export default function DocumentsPage() {
                           ) : (
                             <span className="text-sm text-gray-500">No review info</span>
                           )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            {doc.hasFile && (
+                              <button
+                                onClick={() => handleDownload(doc._id, doc.originalName || 'document')}
+                                className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                              >
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Download
+                              </button>
+                            )}
+                            {doc.downloadCount && doc.downloadCount > 0 && (
+                              <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded">
+                                {doc.downloadCount} downloads
+                              </span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

@@ -14,23 +14,23 @@ const documentSchema = new mongoose.Schema({
   },
   fileName: {
     type: String,
-    required: [true, 'File name is required']
+    required: function() { return this.hasFile; }
   },
   originalName: {
     type: String,
-    required: [true, 'Original file name is required']
+    required: function() { return this.hasFile; }
   },
   filePath: {
     type: String,
-    required: [true, 'File path is required']
+    required: function() { return this.hasFile; }
   },
   fileSize: {
     type: Number,
-    required: [true, 'File size is required']
+    required: function() { return this.hasFile; }
   },
   mimeType: {
     type: String,
-    required: [true, 'MIME type is required']
+    required: function() { return this.hasFile; }
   },
   fileType: {
     type: String,
@@ -122,6 +122,32 @@ const documentSchema = new mongoose.Schema({
       type: String,
       default: '1.0'
     }
+  },
+  // New vendor-related fields
+  vendorDetails: {
+    vendorName: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Vendor name cannot exceed 100 characters']
+    },
+    vendorPhone: {
+      type: String,
+      trim: true,
+      maxlength: [15, 'Phone number cannot exceed 15 characters']
+    },
+    vendorDate: {
+      type: Date
+    },
+    vendorNotes: {
+      type: String,
+      trim: true,
+      maxlength: [500, 'Vendor notes cannot exceed 500 characters']
+    }
+  },
+  // Allow saving details even without file
+  hasFile: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true,

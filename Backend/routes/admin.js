@@ -562,4 +562,56 @@ router.delete('/documents/:id', async (req, res) => {
   }
 });
 
+// @route   GET /api/admin/documents/:id/download
+// @desc    Admin download any document
+// @access  Private (Admin only)
+router.get('/documents/:id/download', async (req, res) => {
+  try {
+    const document = await Document.findById(req.params.id);
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found'
+      });
+    }
+
+    // Check if document has file
+    if (!document.hasFile || !document.filePath) {
+      return res.status(404).json({
+        success: false,
+        message: 'No file attached to this document'
+      });
+    }
+
+    const path = require('path');
+    const fs = require('fs');
+
+    // Check if file exists
+    if (!fs.existsSync(document.filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: 'File not found on server'
+      });
+    }
+
+    // Increment download count
+    await document.incrementDownloadCount();
+
+    // Set appropriate headers
+    res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}"`);
+    res.setHeader('Content-Type', document.mimeType);
+
+    // Send file
+    res.sendFile(path.resolve(document.filePath));
+
+  } catch (error) {
+    console.error('Admin download document error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to download document'
+    });
+  }
+});
+
 module.exports = router;
