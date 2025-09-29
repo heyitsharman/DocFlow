@@ -10,17 +10,7 @@ interface Document {
   title: string
   filename?: string
   originalName?: string
-                           {document.status === 'approved' && document.reviewedBy && (
-                            <div className="text-sm text-green-600">
-                              Approved by {document.reviewedBy.name}
-                              <br />
-                              <span className="text-xs">{document.reviewDate && formatDate(document.reviewDate)}</span>
-                            </div>
-                          )}e:                               {document.reviewComments && (
-                                <div className="mt-1 text-xs text-red-600">
-                                  Reason: {document.reviewComments}
-                                </div>
-                              )}an
+  hasFile: boolean
   uploadedBy: {
     _id: string
     name: string
@@ -318,19 +308,19 @@ export default function AdminDocumentsPage() {
                               </>
                             )}
                           </div>
-                          {document.status === 'approved' && document.approvedBy && (
+                          {document.status === 'approved' && document.reviewedBy && (
                             <div className="text-sm text-gray-500">
-                              Approved by {document.approvedBy.name}
+                              Approved by {document.reviewedBy.name}
                               <br />
-                              <span className="text-xs">{document.approvalDate && formatDate(document.approvalDate)}</span>
+                              <span className="text-xs">{document.reviewDate && formatDate(document.reviewDate)}</span>
                             </div>
                           )}
                           {document.status === 'rejected' && (
                             <div className="text-sm text-red-600">
                               Rejected
-                              {document.rejectionReason && (
+                              {document.reviewComments && (
                                 <div className="text-xs text-gray-500 mt-1">
-                                  Reason: {document.rejectionReason}
+                                  Reason: {document.reviewComments}
                                 </div>
                               )}
                             </div>
