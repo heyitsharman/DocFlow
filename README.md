@@ -2,34 +2,21 @@
 
 > A comprehensive, enterprise-grade document management system with vendor tracking, approval workflows, and advanced file handling capabilities.
 
-## 🌐 Live Demo
+## Live Demo
 
 - **Frontend**: [https://doc-flow-r5e6.vercel.app/](https://doc-flow-r5e6.vercel.app/)
 - **Backend API**: Railway Deployment (Auto-deployed from main branch)
 
-## 📋 Table of Contents
 
-- [Features Overview](#-features-overview)
-- [Technology Stack](#-technology-stack)
-- [Architecture](#-architecture)
-- [Frontend Features](#-frontend-features)
-- [Backend Features](#-backend-features)
-- [Installation & Setup](#-installation--setup)
-- [Environment Variables](#-environment-variables)
-- [Deployment](#-deployment)
-- [API Documentation](#-api-documentation)
-- [License](#-license)
-- [Open to Contributions](#-open-to-contributions)
+## Features Overview
 
-## ✨ Features Overview
-
-### 🔐 Authentication & Authorization
+###  Authentication & Authorization
 - JWT-based authentication with role-based access control
 - User and Admin role management
 - Secure login/logout functionality
 - Protected routes and API endpoints
 
-### 📄 Document Management
+### Document Management
 - **Upload with Vendor Details**: Add vendor name, phone, date alongside documents
 - **Flexible File Upload**: Save document details with or without file attachments
 - **Download Functionality**: Secure document download for users and admins
@@ -37,19 +24,19 @@
 - **Status Workflow**: Pending → Approved/Rejected admin workflow
 - **Search & Filter**: Advanced filtering by status, category, department
 
-### 👥 User Management
+### User Management
 - Employee registration with department and position
 - Profile management and updates
 - Admin panel for user oversight
 - Department-based document access
 
-### 📊 Admin Panel
+### Admin Panel
 - Document approval/rejection workflow
 - User management and oversight
 - System analytics and reporting
 - Bulk operations and management tools
 
-## 🛠 Technology Stack
+## Technology Stack
 
 ### Frontend
 - **Framework**: Next.js 15.5.4 (React 19)
@@ -76,7 +63,7 @@
 - **Code Quality**: ESLint, TypeScript
 - **Environment**: dotenv for configuration
 
-## 🏗 Architecture
+## Architecture
 
 ```
 DocFlow Pro
@@ -96,17 +83,7 @@ DocFlow Pro
     └── File Metadata
 ```
 
-## 🎨 Frontend Features
-
-### Pages & Routes
-- **`/`** - Landing page
-- **`/auth/login`** - User login
-- **`/auth/register`** - User registration
-- **`/dashboard`** - User dashboard with statistics
-- **`/documents`** - Document listing with download and view options
-- **`/upload`** - Document upload with vendor details
-- **`/admin`** - Admin dashboard
-- **`/admin/documents`** - Admin document management
+##  Frontend Features
 
 ### Key Components
 - **DocumentDetailsModal**: Comprehensive document information display
@@ -114,98 +91,14 @@ DocFlow Pro
 - **AuthContext**: Global authentication state management
 - **UI Components**: Reusable button, card, and input components
 
-
 ### Document Management Features
-- ✅ View document details in modal
-- ✅ Download documents (if file exists)
-- ✅ Track download counts
-- ✅ Filter by status and category
-- ✅ Responsive design for all devices
+- View document details in modal
+- Download documents (if file exists)
+- Track download counts
+- Filter by status and category
+- Responsive design for all devices
 
-## ⚙ Backend Features
-
-### API Endpoints
-
-#### Authentication Routes (`/api/auth`)
-- `POST /register` - User registration
-- `POST /login` - User login
-- `GET /profile` - Get user profile
-- `PUT /profile` - Update user profile
-- `POST /logout` - User logout
-
-#### Document Routes (`/api/documents`)
-- `POST /upload` - Upload document with vendor details
-- `GET /` - Get user documents with filtering
-- `GET /:id/download` - Download document file
-- `GET /:id/details` - Get document details
-- `PUT /:id` - Update document
-- `DELETE /:id` - Delete document
-
-#### Admin Routes (`/api/admin`)
-- `GET /documents` - Get all documents for admin review
-- `PUT /documents/:id/approve` - Approve document
-- `PUT /documents/:id/reject` - Reject document
-- `GET /documents/:id/download` - Admin download access
-- `GET /users` - Get all users
-- `PUT /users/:id` - Update user details
-
-### Database Schema
-
-#### User Model
-```javascript
-{
-  name: String (required),
-  email: String (required, unique),
-  employeeId: String (required, unique),
-  password: String (required, hashed),
-  role: String (enum: ['user', 'admin']),
-  department: String,
-  position: String,
-  isActive: Boolean,
-  lastLogin: Date,
-  timestamps: true
-}
-```
-
-#### Document Model
-```javascript
-{
-  title: String (required),
-  description: String,
-  category: String (enum),
-  priority: String (enum),
-  tags: [String],
-  
-  // File Information
-  hasFile: Boolean,
-  fileName: String (conditional),
-  originalName: String (conditional),
-  filePath: String (conditional),
-  fileSize: Number (conditional),
-  mimeType: String (conditional),
-  
-  // Vendor Details
-  vendorDetails: {
-    vendorName: String,
-    vendorPhone: String,
-    vendorDate: Date,
-    vendorNotes: String
-  },
-  
-  // Workflow
-  status: String (enum: ['pending', 'approved', 'rejected']),
-  uploadedBy: ObjectId (ref: 'User'),
-  reviewedBy: ObjectId (ref: 'User'),
-  reviewDate: Date,
-  reviewComments: String,
-  
-  // Analytics
-  downloadCount: Number (default: 0),
-  lastDownloadDate: Date,
-  
-  timestamps: true
-}
-```
+## Backend Features
 
 ### Security Features
 - Password hashing with bcryptjs
@@ -261,31 +154,7 @@ UPLOAD_PATH=./uploads
 FRONTEND_URL=http://localhost:3000
 ```
 
-### Frontend (.env.local)
-```env
-# API Configuration
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-
-# Deployment
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-## 🌐 Deployment
-
-### Vercel (Frontend)
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy frontend
-cd frontend
-vercel --prod
-```
-
-### Railway (Backend)
-1. Connect GitHub repository to Railway
-2. Set environment variables in Railway dashboard
-3. Deploy automatically on push to main branch
+## Deployment
 
 ### Environment Configuration for Production
 ```env
@@ -333,57 +202,12 @@ Content-Type: application/json
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open Pull Request
 
-### Project Structure
-```
-DocFlow/
-├── Backend/
-│   ├── middleware/       # Authentication, upload, validation
-│   ├── models/          # MongoDB schemas
-│   ├── routes/          # API endpoints
-│   ├── uploads/         # File storage
-│   └── server.js        # Main server file
-├── frontend/
-│   ├── src/
-│   │   ├── app/         # Next.js pages
-│   │   ├── components/  # Reusable components
-│   │   ├── contexts/    # React contexts
-│   │   └── lib/         # Utilities and types
-│   └── public/          # Static assets
-└── README.md
-```
-
-## 📝 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🤝 Open to Contributions
-
-This project is actively maintained and welcomes contributions from the community! Whether you're a beginner or an experienced developer, there are many ways to contribute:
-
-### 🚀 Ways to Contribute
-- **🐛 Bug Reports**: Found a bug? Please open an issue with detailed steps to reproduce
-- **💡 Feature Requests**: Have an idea for a new feature? Share it with us!
-- **📝 Documentation**: Help improve our documentation and guides
-- **🛠️ Code Contributions**: Submit pull requests for bug fixes or new features
-- **🧪 Testing**: Help test new features and report feedback
-- **💬 Community Support**: Help answer questions and support other users
-
-### 📬 Get In Touch
+### Get In Touch
 - **GitHub**: [@heyitsharman](https://github.com/heyitsharman)
 - **Email**: [harmankaur0779@gmail.com](mailto:harmankaur0779@gmail.com)
 - **Issues**: Open an issue on this repository for any questions or suggestions
 
-### 🌟 Contributing Guidelines
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature-name`)
-3. Make your changes with clear, descriptive commits
-4. Test your changes thoroughly
-5. Submit a pull request with a detailed description
-
-We appreciate all contributions, no matter how small! Every bit of help makes DocFlow Pro better for everyone. 💙
-
----
-
-**DocFlow Pro** - Making document management simple, secure, and efficient. 🚀
-
-For support or questions, please open an issue on GitHub.
